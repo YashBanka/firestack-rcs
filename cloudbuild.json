@@ -1,0 +1,63 @@
+{
+    "steps": [{
+      "name": "ubuntu",
+      "args": ["-c", "chmod -R ugo+rw /output_bundle /workspace /env /yaml"],
+      "id": "ubuntu",
+      "entrypoint": "bash",
+      "volumes": [{
+        "name": "output_bundle",
+        "path": "/output_bundle"
+      }, {
+        "name": "env",
+        "path": "/env"
+      }, {
+        "name": "yaml",
+        "path": "/yaml"
+      }]
+    }, {
+      "name": "gcr.io/buildpacks/firebase-app-hosting-22/builder:ea3d194b9730f56283dfaaf2a03eba257ae4acd8",
+      "args": ["--apphostingyaml_filepath", "/workspace/apphosting.yaml", "--project_id", "firestack-rcs", "--apphostingyaml_output_filepath", "/yaml/apphostingyaml_processed", "--dot_env_output_filepath", "/env/vars_with_secret_values"],
+      "id": "preparer",
+      "entrypoint": "/bin/preparer",
+      "volumes": [{
+        "name": "output_bundle",
+        "path": "/output_bundle"
+      }, {
+        "name": "env",
+        "path": "/env"
+      }, {
+        "name": "yaml",
+        "path": "/yaml"
+      }]
+    }, {
+      "name": "gcr.io/k8s-skaffold/pack",
+      "args": ["pack", "build", "us-central1-docker.pkg.dev/firestack-rcs/firebaseapphosting-images/testservice:build-2024-05-31-002", "--network", "cloudbuild", "--builder", "gcr.io/buildpacks/firebase-app-hosting-22/builder:ea3d194b9730f56283dfaaf2a03eba257ae4acd8", "--volume", "output_bundle:/output_bundle:rw", "--trust-builder", "--env-file", "/env/vars_with_secret_values", "--env", "FIREBASE_OUTPUT_BUNDLE_DIR\u003d/output_bundle", "--env", "FIREBASE_APP_DIRECTORY\u003d","--env", "FIREBASE_CONFIG\u003d{\"appId\":\"1:471218275487:web:f700d19ac8ae8bf4964eaa\",\"apiKey\":\"AIzaSyBK6wGdn-MlGNKukt6sHiWP_RqeAFKDPvA\",\"projectId\":\"firestack-rcs\",\"projectNumber\":471218275487}"],
+      "id": "pack",
+      "volumes": [{
+        "name": "output_bundle",
+        "path": "/output_bundle"
+      }, {
+        "name": "env",
+        "path": "/env"
+      }]
+    }, {
+      "name": "gcr.io/buildpacks/firebase-app-hosting-22/builder:ea3d194b9730f56283dfaaf2a03eba257ae4acd8",
+      "args": ["-c", "/bin/publisher --apphostingyaml_filepath /yaml/apphostingyaml_processed --output_bundle_dir /output_bundle --output_filepath \"$$BUILDER_OUTPUT/output\""],
+      "id": "publisher",
+      "entrypoint": "/bin/bash",
+      "volumes": [{
+        "name": "output_bundle",
+        "path": "/output_bundle"
+      }, {
+        "name": "yaml",
+        "path": "/yaml"
+      }]
+    }],
+    "images": ["us-central1-docker.pkg.dev/firestack-rcs/firebaseapphosting-images/testservice:build-2024-05-31-002"],
+    "options": {
+      "logging": "CLOUD_LOGGING_ONLY"
+    },
+    "tags": ["rcs", "fah", "fc5375fda8beca19b3e499ddccf71dd56a8d803a", "build-2024-05-31-002", "testservice", "r-buildpacks"],
+    "serviceAccount": "projects/firestack-rcs/serviceAccounts/firebase-app-hosting-compute@firestack-rcs.iam.gserviceaccount.com"
+  }
+
